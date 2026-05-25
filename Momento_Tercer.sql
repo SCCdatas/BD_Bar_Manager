@@ -233,119 +233,83 @@ AND o.Estado = 'Cerrada'
 GROUP BY b.Nombre;
 GO
 
-/* 1. Procedimiento para registrar un producto*/
-
-CREATE PROCEDURE sp_RegistrarProducto
+-- ============================================
+-- 1. Registrar un nuevo usuario
+-- ============================================
+CREATE PROCEDURE sp_RegistrarUsuario
 (
     @IdBar INT,
     @Nombre NVARCHAR(100),
-    @Descripcion NVARCHAR(200),
-    @Precio DECIMAL(10,2),
-    @Stock INT
+    @Correo NVARCHAR(100),
+    @PasswordHash NVARCHAR(255),
+    @Rol NVARCHAR(50)
 )
 AS
 BEGIN
-    INSERT INTO Productos (IdBar, Nombre, Descripcion, Precio, Stock)
-    VALUES (@IdBar, @Nombre, @Descripcion, @Precio, @Stock);
-
-    PRINT 'Producto registrado correctamente';
+    INSERT INTO Usuarios (IdBar, Nombre, Correo, PasswordHash, Rol, Activo)
+    VALUES (@IdBar, @Nombre, @Correo, @PasswordHash, @Rol, 1);
+    
+    PRINT 'Usuario registrado correctamente';
 END;
-go
-
-EXEC sp_RegistrarProducto
-    @IdBar = 1,
-    @Nombre = 'Vodka',
-    @Descripcion = 'Vodka ruso',
-    @Precio = 10000,
-    @Stock = 40;
-
 GO
-
+ 
+-- Ejemplo:
+ EXEC sp_RegistrarUsuario @IdBar = 1, @Nombre = 'Diego Mesero', @Correo = 'diego@bar.com', @PasswordHash = 'hash123', @Rol = 'Mesero';
+ 
+ 
 -- ============================================
--- Procedimiento: Agregar Producto
+-- 2. Crear una nueva mesa
 -- ============================================
-
-CREATE PROCEDURE sp_AgregarProducto
+CREATE PROCEDURE sp_CrearMesa
 (
     @IdBar INT,
-    @Nombre NVARCHAR(100),
-    @Descripcion NVARCHAR(200),
-    @Precio DECIMAL(10,2),
-    @Stock INT
+    @Numero INT,
+    @Capacidad INT
 )
 AS
 BEGIN
-
-    -- Validar que el precio no sea negativo
-    IF @Precio < 0
-    BEGIN
-        PRINT 'Error: El precio no puede ser negativo';
-        RETURN;
-    END;
-
-    -- Validar que el stock no sea negativo
-    IF @Stock < 0
-    BEGIN
-        PRINT 'Error: El stock no puede ser negativo';
-        RETURN;
-    END;
-
-    -- Insertar producto
-    INSERT INTO Productos
-    (
-        IdBar,
-        Nombre,
-        Descripcion,
-        Precio,
-        Stock
-    )
-    VALUES
-    (
-        @IdBar,
-        @Nombre,
-        @Descripcion,
-        @Precio,
-        @Stock
-    );
-
-    PRINT 'Producto agregado correctamente';
-
+    INSERT INTO Mesas (IdBar, Numero, Estado, Capacidad)
+    VALUES (@IdBar, @Numero, 'Libre', @Capacidad);
+    
+    PRINT 'Mesa creada correctamente';
 END;
-go
-
-EXEC sp_AgregarProducto
-    @IdBar = 1,
-    @Nombre = 'Vodka',
-    @Descripcion = 'Vodka premium',
-    @Precio = 12000,
-    @Stock = 25;
-
-
 GO
-
+ 
+-- Ejemplo:
+ EXEC sp_CrearMesa @IdBar = 1, @Numero = 3, @Capacidad = 4;
+ 
+ 
 -- ============================================
--- Procedimiento: Total de Ventas por Bar
+-- 3. Cambiar estado de una mesa
 -- ============================================
-
-CREATE PROCEDURE sp_TotalVentasBar
+CREATE PROCEDURE sp_CambiarEstadoMesa
 (
-    @IdBar INT
+    @IdMesa INT,
+    @NuevoEstado NVARCHAR(20)
 )
 AS
 BEGIN
-
-    SELECT 
-        b.Nombre AS NombreBar,
-        SUM(o.Total) AS TotalVentas
-    FROM Ordenes o
-    INNER JOIN Bares b
-        ON o.IdBar = b.IdBar
-    WHERE o.Estado = 'Cerrada'
-        AND o.IdBar = @IdBar
-    GROUP BY b.Nombre;
-
+    -- Validar que el estado sea válido
+    IF @NuevoEstado NOT IN ('Libre', 'Ocupada')
+    BEGIN
+        PRINT 'Error: El estado debe ser "Libre" u "Ocupada"';
+        RETURN;
+    END;
+    
+    -- Validar que la mesa existe
+    IF NOT EXISTS (SELECT 1 FROM Mesas WHERE IdMesa = @IdMesa)
+    BEGIN
+        PRINT 'Error: La mesa no existe';
+        RETURN;
+    END;
+    
+    UPDATE Mesas
+    SET Estado = @NuevoEstado
+    WHERE IdMesa = @IdMesa;
+    
+    PRINT 'Estado de la mesa actualizado';
 END;
-go
-
-EXEC sp_TotalVentasBar
-    @IdBar = 1;
+GO
+ 
+-- Ejemplo:
+ EXEC sp_CambiarEstadoMesa @IdMesa = 1, @NuevoEstado = 'Ocupada'
