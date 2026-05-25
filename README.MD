@@ -73,8 +73,6 @@ La base de datos **WebBarDB** convive con dos submódulos principales:
 - Las **vistas del front** (pantallas de administración, gestión de mesas, ventas) se conectan con la lógica del backend, que a su vez interactúa con la BD.  
 - Ejemplo:  
   - Vista “Gestión de Productos” → llama al método `AgregarProducto()` → ejecuta `sp_AgregarProducto` en la BD.  
-  - Vista “Reporte de Ventas” → consulta `sp_TotalVentasBar` → muestra resultados en gráficos o tablas.  
-- De esta forma, las vistas no interactúan directamente con la BD, sino que consumen la lógica implementada en el backend, garantizando seguridad y consistencia.
 
 ---
 
